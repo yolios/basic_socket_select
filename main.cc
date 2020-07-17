@@ -5,9 +5,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <iostream>
 #include <algorithm>
 
+#define POLL_TIMEOUT 500
 #define MAX_MSG_SIZE 16
 
 int acceptor = -1;
@@ -95,25 +97,21 @@ void initializeAcceptorSocket()
 
 void acceptConnection()
 {
-  fd_set acceptSocketSet;
-  FD_ZERO(&acceptSocketSet);
-  FD_SET(acceptor, &acceptSocketSet);
-  int fdMax = std::max(connection, acceptor) + 1;
-  timeval timeoutValue;
-  timeoutValue.tv_sec = 0;
-  timeoutValue.tv_usec = 500000;
-  int selectstatus = select(fdMax, &acceptSocketSet, NULL, NULL, &timeoutValue);
-  if (selectstatus == -1)
+  struct pollfd pollDescription;
+  pollDescription.fd = acceptor;
+  pollDescription.events = POLLIN;
+  int pollstatus = poll(&pollDescription, 1, POLL_TIMEOUT);
+  if (pollstatus == -1)
   {
-    std::cerr << "Accept select failed (Error " << errno << ")" << std::endl;
+    std::cerr << "Accept poll failed (Error " << errno << ")" << std::endl;
   }
-  else if (selectstatus == 0)
+  else if (pollstatus == 0)
   {
-    std::cout << "Accept select timed out" << std::endl;
+    std::cout << "Accept poll timed out" << std::endl;
   }
   else
   {
-    std::cout << "Accept select success" << std::endl;
+    std::cout << "Accept poll success" << std::endl;
     connection = accept(acceptor, 0, 0);
     if (connection == -1)
     {
@@ -145,27 +143,23 @@ void acceptConnection()
 
 void readMessage()
 {
-  fd_set readSocketSet;
-  FD_ZERO(&readSocketSet);
-  FD_SET(connection, &readSocketSet);
-  int fdMax = std::max(connection, acceptor) + 1;
-  timeval timeoutValue;
-  timeoutValue.tv_sec = 0;
-  timeoutValue.tv_usec = 500000;
-  int selectstatus = select(fdMax, &readSocketSet, NULL, NULL, &timeoutValue);
-  if (selectstatus == -1)
+  struct pollfd pollDescription;
+  pollDescription.fd = connection;
+  pollDescription.events = POLLIN;
+  int pollStatus = poll(&pollDescription, 1, POLL_TIMEOUT);
+  if (pollStatus == -1)
   {
-    std::cerr << "Read select failed (Error " << errno << ")" << std::endl;
+    std::cerr << "Read poll failed (Error " << errno << ")" << std::endl;
     close(connection);
     connected = false;
   }
-  else if (selectstatus == 0)
+  else if (pollStatus == 0)
   {
-    std::cout << "Read select timed out" << std::endl;
+    std::cout << "Read poll timed out" << std::endl;
   }
   else
   {
-    std::cout << "Read select success" << std::endl;
+    std::cout << "Read poll success" << std::endl;
     int readstatus = read(connection, (void*)buf, MAX_MSG_SIZE);
     if (readstatus == 0)  // EOF
     {
