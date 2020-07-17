@@ -48,7 +48,7 @@ void initializeAcceptorSocket()
   hints.ai_protocol = 0;
   hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
   const char* hostname = "localhost";
-  const char* portname = "30224";
+  const char* portname = "30222";
 
   struct addrinfo* resolved;
   int err = getaddrinfo(hostname, portname, &hints, &resolved);
@@ -186,7 +186,7 @@ void readMessage()
       if (buf[0] == 'q' && readstatus == 1)
       {
         std::cout << "Quit" << std::endl;
-        close(connection);
+        shutdown(connection, SHUT_RDWR);
       }
     }
   }
