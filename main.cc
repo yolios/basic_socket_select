@@ -47,7 +47,7 @@ void initializeAcceptorSocket()
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = 0;
   hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
-  const char* hostname = "localhost";
+  const char* hostname = nullptr;
   const char* portname = "30222";
 
   struct addrinfo* resolved;
